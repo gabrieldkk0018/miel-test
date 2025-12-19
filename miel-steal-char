@@ -1,86 +1,109 @@
+-- MH STEAL CHARACTER
+-- UI BASE FUNCIONAL (MOBILE + PC)
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
-local currentClone
-local welds = {}
+local player = Players.LocalPlayer
 
-local function ClearClone()
-	if currentClone then
-		currentClone:Destroy()
-		currentClone = nil
-	end
-	for _, w in ipairs(welds) do
-		w:Destroy()
-	end
-	welds = {}
-
-	local char = player.Character
-	if char then
-		for _, v in ipairs(char:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.LocalTransparencyModifier = 0
-			end
-		end
-	end
+-- evita duplicar
+if player.PlayerGui:FindFirstChild("MH_StealUI") then
+	player.PlayerGui.MH_StealUI:Destroy()
 end
 
-local function StealCharacter(username)
-	Status.Text = "Copying skin..."
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "MH_StealUI"
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
 
-	ClearClone()
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 150)
+frame.Position = UDim2.new(0.5, -130, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,40)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+frame.Active = true
+frame.Draggable = true
 
-	local success, userId = pcall(function()
-		return Players:GetUserIdFromNameAsync(username)
-	end)
-	if not success then
-		Status.Text = "Invalid username"
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
+
+-- Borda RGB
+local stroke = Instance.new("UIStroke", frame)
+stroke.Thickness = 2
+
+RunService.RenderStepped:Connect(function()
+	stroke.Color = Color3.fromHSV((tick()%5)/5,1,1)
+end)
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,0,0,28)
+title.BackgroundColor3 = Color3.fromRGB(40,40,55)
+title.Text = "MH Steal Character"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.Parent = frame
+Instance.new("UICorner", title).CornerRadius = UDim.new(0,10)
+
+-- Texto
+local info = Instance.new("TextLabel")
+info.Size = UDim2.new(1,-20,0,20)
+info.Position = UDim2.new(0,10,0,35)
+info.BackgroundTransparency = 1
+info.Text = "Type the person's nickname below."
+info.TextColor3 = Color3.fromRGB(200,200,200)
+info.Font = Enum.Font.Gotham
+info.TextSize = 12
+info.TextXAlignment = Left
+info.Parent = frame
+
+-- Caixa de texto
+local box = Instance.new("TextBox")
+box.Size = UDim2.new(1,-20,0,28)
+box.Position = UDim2.new(0,10,0,60)
+box.PlaceholderText = "Username"
+box.Text = ""
+box.BackgroundColor3 = Color3.fromRGB(45,45,60)
+box.TextColor3 = Color3.new(1,1,1)
+box.Font = Enum.Font.Gotham
+box.TextSize = 13
+box.ClearTextOnFocus = false
+box.Parent = frame
+Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
+
+-- Botão
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(1,-20,0,30)
+btn.Position = UDim2.new(0,10,0,95)
+btn.Text = "Steal Char"
+btn.BackgroundColor3 = Color3.fromRGB(70,120,255)
+btn.TextColor3 = Color3.new(1,1,1)
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 14
+btn.Parent = frame
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
+
+-- Status
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1,-20,0,18)
+status.Position = UDim2.new(0,10,0,130)
+status.BackgroundTransparency = 1
+status.Text = ""
+status.TextColor3 = Color3.fromRGB(150,255,150)
+status.Font = Enum.Font.Gotham
+status.TextSize = 12
+status.TextXAlignment = Left
+status.Parent = frame
+
+-- FUNÇÃO (por enquanto só teste)
+btn.MouseButton1Click:Connect(function()
+	if box.Text == "" then
+		status.Text = "Invalid username"
 		return
 	end
 
-	local success2, model = pcall(function()
-		return Players:CreateHumanoidModelFromUserId(userId)
-	end)
-	if not success2 or not model then
-		Status.Text = "Failed to load avatar"
-		return
-	end
-
-	model.Name = "MH_StolenCharacter"
-	model.Parent = workspace
-	currentClone = model
-
-	-- REMOVE HUMANOID DO CLONE
-	local cloneHumanoid = model:FindFirstChildOfClass("Humanoid")
-	if cloneHumanoid then
-		cloneHumanoid:Destroy()
-	end
-
-	local char = player.Character or player.CharacterAdded:Wait()
-
-	-- ESCONDE SEU CORPO
-	for _, v in ipairs(char:GetDescendants()) do
-		if v:IsA("BasePart") then
-			v.LocalTransparencyModifier = 1
-		end
-	end
-
-	-- SOLDA PEÇA POR PEÇA
-	for _, part in ipairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Anchored = false
-			part.CanCollide = false
-
-			local original = char:FindFirstChild(part.Name)
-			if original and original:IsA("BasePart") then
-				part.CFrame = original.CFrame
-
-				local weld = Instance.new("WeldConstraint")
-				weld.Part0 = part
-				weld.Part1 = original
-				weld.Parent = part
-				table.insert(welds, weld)
-			end
-		end
-	end
-
-	Status.Text = "Skin copied successfully"
-end
+	status.Text = "Skin copied successfully"
+end)
