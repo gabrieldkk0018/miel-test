@@ -1,19 +1,15 @@
--- MH STEAL CHARACTER (BETA)
--- Visual client-side + animações copiadas
--- Mobile + PC | Draggable | RGB Border
+-- MH STEAL CHARACTER (BETA STABLE)
+-- Visual Only | Sem copiar animações (anti-bug)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-
 local player = Players.LocalPlayer
 
--- Evita duplicar UI
 if player.PlayerGui:FindFirstChild("MH_StealUI") then
 	player.PlayerGui.MH_StealUI:Destroy()
 end
 
--- ================= GUI =================
-
+-- GUI
 local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.Name = "MH_StealUI"
 gui.ResetOnSpawn = false
@@ -22,12 +18,10 @@ local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0,260,0,155)
 frame.Position = UDim2.new(0.5,-130,0.4,0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,40)
-frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
 
--- RGB Border
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness = 2
 RunService.RenderStepped:Connect(function()
@@ -43,53 +37,39 @@ title.TextColor3 = Color3.new(1,1,1)
 title.BackgroundColor3 = Color3.fromRGB(40,40,55)
 Instance.new("UICorner", title).CornerRadius = UDim.new(0,10)
 
-local info = Instance.new("TextLabel", frame)
-info.Position = UDim2.new(0,10,0,35)
-info.Size = UDim2.new(1,-20,0,20)
-info.Text = "Type the person's nickname below."
-info.TextColor3 = Color3.fromRGB(200,200,200)
-info.Font = Enum.Font.Gotham
-info.TextSize = 12
-info.BackgroundTransparency = 1
-info.TextXAlignment = Enum.TextXAlignment.Left
-
 local box = Instance.new("TextBox", frame)
-box.Position = UDim2.new(0,10,0,60)
-box.Size = UDim2.new(1,-20,0,28)
+box.Position = UDim2.new(0,10,0,50)
+box.Size = UDim2.new(1,-20,0,30)
 box.PlaceholderText = "Username"
 box.ClearTextOnFocus = false
-box.Font = Enum.Font.Gotham
-box.TextSize = 13
-box.TextColor3 = Color3.new(1,1,1)
 box.BackgroundColor3 = Color3.fromRGB(45,45,60)
+box.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
 
 local btn = Instance.new("TextButton", frame)
-btn.Position = UDim2.new(0,10,0,95)
-btn.Size = UDim2.new(1,-20,0,30)
-btn.Text = "Steal Char"
+btn.Position = UDim2.new(0,10,0,90)
+btn.Size = UDim2.new(1,-20,0,32)
+btn.Text = "Steal Skin"
 btn.Font = Enum.Font.GothamBold
 btn.TextSize = 14
-btn.TextColor3 = Color3.new(1,1,1)
 btn.BackgroundColor3 = Color3.fromRGB(70,120,255)
+btn.TextColor3 = Color3.new(1,1,1)
 Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
 
 local status = Instance.new("TextLabel", frame)
-status.Position = UDim2.new(0,10,0,130)
+status.Position = UDim2.new(0,10,0,128)
 status.Size = UDim2.new(1,-20,0,18)
 status.BackgroundTransparency = 1
+status.TextColor3 = Color3.fromRGB(150,255,150)
+status.TextXAlignment = Enum.TextXAlignment.Left
 status.Font = Enum.Font.Gotham
 status.TextSize = 12
-status.TextXAlignment = Enum.TextXAlignment.Left
-status.TextColor3 = Color3.fromRGB(150,255,150)
 
--- ================= CORE =================
+-- CORE
+local clone, welds = nil, {}
 
-local currentClone
-local welds = {}
-
-local function ClearVisual()
-	if currentClone then currentClone:Destroy() end
+local function clear()
+	if clone then clone:Destroy() end
 	for _,w in pairs(welds) do w:Destroy() end
 	welds = {}
 
@@ -103,45 +83,11 @@ local function ClearVisual()
 	end
 end
 
--- Copia animações do usuário para o SEU humanoid
-local function CopyAnimationsFromUser(userId)
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-
-	local ok, desc = pcall(function()
-		return Players:GetHumanoidDescriptionFromUserId(userId)
-	end)
-	if not ok or not desc then return end
-
-	local animate = char:FindFirstChild("Animate")
-	if not animate then return end
-
-	local function setAnim(folderName, animId)
-		if not animId or animId == 0 then return end
-		local folder = animate:FindFirstChild(folderName)
-		if folder then
-			for _,a in pairs(folder:GetChildren()) do
-				if a:IsA("Animation") then
-					a.AnimationId = "rbxassetid://"..animId
-				end
-			end
-		end
-	end
-
-	setAnim("idle", desc.IdleAnimation)
-	setAnim("walk", desc.WalkAnimation)
-	setAnim("run", desc.RunAnimation)
-	setAnim("jump", desc.JumpAnimation)
-	setAnim("fall", desc.FallAnimation)
-	setAnim("climb", desc.ClimbAnimation)
-end
-
-local function StealCharacter(username)
+local function steal(username)
+	clear()
 	status.Text = "Copying skin..."
-	ClearVisual()
 
-	local ok, userId = pcall(function()
+	local ok,id = pcall(function()
 		return Players:GetUserIdFromNameAsync(username)
 	end)
 	if not ok then
@@ -149,57 +95,51 @@ local function StealCharacter(username)
 		return
 	end
 
-	local ok2, model = pcall(function()
-		return Players:CreateHumanoidModelFromUserId(userId)
+	local ok2,model = pcall(function()
+		return Players:CreateHumanoidModelFromUserId(id)
 	end)
-	if not ok2 or not model then
+	if not ok2 then
 		status.Text = "Failed to load avatar"
 		return
 	end
 
-	model.Name = "MH_VisualClone"
 	model.Parent = workspace
-	currentClone = model
-
-	local cloneHum = model:FindFirstChildOfClass("Humanoid")
-	if cloneHum then cloneHum:Destroy() end
+	model.Name = "MH_VisualClone"
+	clone = model
 
 	local char = player.Character or player.CharacterAdded:Wait()
 
-	-- Esconde corpo original
+	-- remove humanoid do clone
+	local h = model:FindFirstChildOfClass("Humanoid")
+	if h then h:Destroy() end
+
+	-- esconder corpo original
 	for _,p in pairs(char:GetDescendants()) do
 		if p:IsA("BasePart") then
 			p.LocalTransparencyModifier = 1
 		end
 	end
 
-	-- Solda partes do clone
-	for _,part in pairs(model:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.CanCollide = false
-			part.Anchored = false
-
-			local original = char:FindFirstChild(part.Name)
-			if original then
-				part.CFrame = original.CFrame
-				local weld = Instance.new("WeldConstraint", part)
-				weld.Part0 = part
-				weld.Part1 = original
-				table.insert(welds, weld)
+	-- soldar clone
+	for _,p in pairs(model:GetDescendants()) do
+		if p:IsA("BasePart") then
+			p.CanCollide = false
+			local o = char:FindFirstChild(p.Name)
+			if o then
+				p.CFrame = o.CFrame
+				local w = Instance.new("WeldConstraint", p)
+				w.Part0 = p
+				w.Part1 = o
+				table.insert(welds, w)
 			end
 		end
 	end
 
-	-- COPIA ANIMAÇÕES (resolve o boneco parado)
-	CopyAnimationsFromUser(userId)
-
-	status.Text = "Skin copied successfully"
+	status.Text = "Skin aplicada (estável)"
 end
 
 btn.MouseButton1Click:Connect(function()
-	if box.Text == "" then
-		status.Text = "Invalid username"
-	else
-		StealCharacter(box.Text)
+	if box.Text ~= "" then
+		steal(box.Text)
 	end
 end)
