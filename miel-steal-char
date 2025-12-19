@@ -1,140 +1,159 @@
 -- MH STEAL CHARACTER (BETA)
--- Visual only | Mobile + PC | Draggable | RGB Border
+-- CLIENT-SIDE VISUAL COPY (FUNCIONA)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
--- evita duplicar UI
 if player.PlayerGui:FindFirstChild("MH_StealUI") then
 	player.PlayerGui.MH_StealUI:Destroy()
 end
 
 -- ================= GUI =================
 
-local gui = Instance.new("ScreenGui")
+local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.Name = "MH_StealUI"
 gui.ResetOnSpawn = false
-gui.Parent = player.PlayerGui
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 260, 0, 155)
-frame.Position = UDim2.new(0.5, -130, 0.4, 0)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,260,0,155)
+frame.Position = UDim2.new(0.5,-130,0.4,0)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
-frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0,10)
 
--- RGB border
 local stroke = Instance.new("UIStroke", frame)
 stroke.Thickness = 2
 RunService.RenderStepped:Connect(function()
-	stroke.Color = Color3.fromHSV((tick() % 5) / 5, 1, 1)
+	stroke.Color = Color3.fromHSV((tick()%5)/5,1,1)
 end)
 
--- Title
-local title = Instance.new("TextLabel")
+local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1,0,0,28)
-title.BackgroundColor3 = Color3.fromRGB(40,40,55)
 title.Text = "MH Steal Character"
-title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 14
-title.Parent = frame
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundColor3 = Color3.fromRGB(40,40,55)
 Instance.new("UICorner", title).CornerRadius = UDim.new(0,10)
 
--- Info text
-local info = Instance.new("TextLabel")
-info.Size = UDim2.new(1,-20,0,20)
+local info = Instance.new("TextLabel", frame)
 info.Position = UDim2.new(0,10,0,35)
-info.BackgroundTransparency = 1
+info.Size = UDim2.new(1,-20,0,20)
 info.Text = "Type the person's nickname below."
 info.TextColor3 = Color3.fromRGB(200,200,200)
 info.Font = Enum.Font.Gotham
 info.TextSize = 12
+info.BackgroundTransparency = 1
 info.TextXAlignment = Enum.TextXAlignment.Left
-info.Parent = frame
 
--- TextBox
-local box = Instance.new("TextBox")
-box.Size = UDim2.new(1,-20,0,28)
+local box = Instance.new("TextBox", frame)
 box.Position = UDim2.new(0,10,0,60)
+box.Size = UDim2.new(1,-20,0,28)
 box.PlaceholderText = "Username"
-box.Text = ""
-box.BackgroundColor3 = Color3.fromRGB(45,45,60)
-box.TextColor3 = Color3.new(1,1,1)
+box.ClearTextOnFocus = false
 box.Font = Enum.Font.Gotham
 box.TextSize = 13
-box.ClearTextOnFocus = false
-box.Parent = frame
+box.TextColor3 = Color3.new(1,1,1)
+box.BackgroundColor3 = Color3.fromRGB(45,45,60)
 Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
 
--- Button
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(1,-20,0,30)
+local btn = Instance.new("TextButton", frame)
 btn.Position = UDim2.new(0,10,0,95)
+btn.Size = UDim2.new(1,-20,0,30)
 btn.Text = "Steal Char"
-btn.BackgroundColor3 = Color3.fromRGB(70,120,255)
-btn.TextColor3 = Color3.new(1,1,1)
 btn.Font = Enum.Font.GothamBold
 btn.TextSize = 14
-btn.Parent = frame
+btn.TextColor3 = Color3.new(1,1,1)
+btn.BackgroundColor3 = Color3.fromRGB(70,120,255)
 Instance.new("UICorner", btn).CornerRadius = UDim.new(0,8)
 
--- Status
-local status = Instance.new("TextLabel")
-status.Size = UDim2.new(1,-20,0,18)
+local status = Instance.new("TextLabel", frame)
 status.Position = UDim2.new(0,10,0,130)
+status.Size = UDim2.new(1,-20,0,18)
 status.BackgroundTransparency = 1
-status.Text = ""
-status.TextColor3 = Color3.fromRGB(150,255,150)
 status.Font = Enum.Font.Gotham
 status.TextSize = 12
 status.TextXAlignment = Enum.TextXAlignment.Left
-status.Parent = frame
+status.TextColor3 = Color3.fromRGB(150,255,150)
 
--- ================= CORE FUNCTION =================
--- VISUAL ONLY (ApplyDescription)
+-- ================= CORE =================
+
+local currentClone
+local welds = {}
+
+local function Clear()
+	if currentClone then currentClone:Destroy() end
+	for _,w in pairs(welds) do w:Destroy() end
+	welds = {}
+
+	local char = player.Character
+	if char then
+		for _,p in pairs(char:GetDescendants()) do
+			if p:IsA("BasePart") then
+				p.LocalTransparencyModifier = 0
+			end
+		end
+	end
+end
 
 local function StealCharacter(username)
 	status.Text = "Copying skin..."
+	Clear()
 
 	local ok, userId = pcall(function()
 		return Players:GetUserIdFromNameAsync(username)
 	end)
-
 	if not ok then
 		status.Text = "User not found"
 		return
 	end
 
-	local ok2, desc = pcall(function()
-		return Players:GetHumanoidDescriptionFromUserId(userId)
+	local ok2, model = pcall(function()
+		return Players:CreateHumanoidModelFromUserId(userId)
 	end)
-
-	if not ok2 or not desc then
+	if not ok2 or not model then
 		status.Text = "Failed to load avatar"
 		return
 	end
 
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:FindFirstChildOfClass("Humanoid")
+	model.Name = "MH_VisualClone"
+	model.Parent = workspace
+	currentClone = model
 
-	if not hum then
-		status.Text = "Humanoid not found"
-		return
+	local cloneHum = model:FindFirstChildOfClass("Humanoid")
+	if cloneHum then cloneHum:Destroy() end
+
+	local char = player.Character or player.CharacterAdded:Wait()
+
+	for _,p in pairs(char:GetDescendants()) do
+		if p:IsA("BasePart") then
+			p.LocalTransparencyModifier = 1
+		end
 	end
 
-	-- aplica SOMENTE aparência
-	hum:ApplyDescription(desc)
+	for _,part in pairs(model:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+			part.Anchored = false
+
+			local original = char:FindFirstChild(part.Name)
+			if original then
+				part.CFrame = original.CFrame
+				local weld = Instance.new("WeldConstraint", part)
+				weld.Part0 = part
+				weld.Part1 = original
+				table.insert(welds, weld)
+			end
+		end
+	end
 
 	status.Text = "Skin copied successfully"
 end
 
--- Button click
 btn.MouseButton1Click:Connect(function()
 	if box.Text == "" then
 		status.Text = "Invalid username"
