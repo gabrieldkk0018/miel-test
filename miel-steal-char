@@ -64,7 +64,7 @@ Title.BackgroundTransparency = 1
 Title.Text = "mh steal character"
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
-Title.TextXAlignment = Left
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.TextColor3 = Color3.fromRGB(255,255,255)
 
 --// Minimize Button
