@@ -11,30 +11,29 @@ if player.PlayerGui:FindFirstChild("MHStealCharacter") then
 end
 
 --// ScreenGui
-local ScreenGui = Instance.new("ScreenGui")
+local ScreenGui = Instance.new("ScreenGui", player.PlayerGui)
 ScreenGui.Name = "MHStealCharacter"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = player.PlayerGui
 
---// Main Frame (mobile friendly)
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0.85, 0, 0, 210)
-MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
-MainFrame.Active = true
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+--// Main Frame (PEQUENO)
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 260, 0, 180)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(28,28,36)
+Main.BorderSizePixel = 0
+Main.Active = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
 --// RGB Border
-local Border = Instance.new("Frame", MainFrame)
+local Border = Instance.new("Frame", Main)
 Border.Size = UDim2.new(1,0,1,0)
 Border.BackgroundColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", Border).CornerRadius = UDim.new(0,14)
+Border.ZIndex = 0
+Instance.new("UICorner", Border).CornerRadius = UDim.new(0,12)
 
-local Gradient = Instance.new("UIGradient", Border)
-Gradient.Color = ColorSequence.new{
+local Grad = Instance.new("UIGradient", Border)
+Grad.Color = ColorSequence.new{
 	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
 	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0,255,0)),
 	ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0,0,255)),
@@ -42,118 +41,168 @@ Gradient.Color = ColorSequence.new{
 }
 
 RunService.RenderStepped:Connect(function(dt)
-	Gradient.Rotation = (Gradient.Rotation + dt*50) % 360
+	Grad.Rotation = (Grad.Rotation + dt*50) % 360
 end)
 
 --// Inner
 local Inner = Instance.new("Frame", Border)
-Inner.Size = UDim2.new(1,-6,1,-6)
-Inner.Position = UDim2.new(0,3,0,3)
-Inner.BackgroundColor3 = Color3.fromRGB(30,30,40)
-Instance.new("UICorner", Inner).CornerRadius = UDim.new(0,12)
+Inner.Size = UDim2.new(1,-4,1,-4)
+Inner.Position = UDim2.new(0,2,0,2)
+Inner.BackgroundColor3 = Color3.fromRGB(28,28,36)
+Instance.new("UICorner", Inner).CornerRadius = UDim.new(0,10)
 
---// Title (drag here)
-local Title = Instance.new("TextLabel", Inner)
-Title.Size = UDim2.new(1,0,0,36)
+--// Top Bar (DRAG AQUI)
+local Top = Instance.new("Frame", Inner)
+Top.Size = UDim2.new(1,0,0,32)
+Top.BackgroundColor3 = Color3.fromRGB(40,40,55)
+Instance.new("UICorner", Top).CornerRadius = UDim.new(0,10)
+
+local Title = Instance.new("TextLabel", Top)
+Title.Size = UDim2.new(1,-40,1,0)
+Title.Position = UDim2.new(0,10,0,0)
+Title.BackgroundTransparency = 1
 Title.Text = "mh steal character"
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+Title.TextSize = 14
+Title.TextXAlignment = Left
 Title.TextColor3 = Color3.fromRGB(255,255,255)
-Title.BackgroundColor3 = Color3.fromRGB(45,45,60)
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0,10)
 
---// Subtitle
-local Subtitle = Instance.new("TextLabel", Inner)
-Subtitle.Size = UDim2.new(1,-20,0,30)
-Subtitle.Position = UDim2.new(0,10,0,40)
-Subtitle.BackgroundTransparency = 1
-Subtitle.TextWrapped = true
-Subtitle.Text = "Type the person's nickname below."
-Subtitle.Font = Enum.Font.Gotham
-Subtitle.TextSize = 13
-Subtitle.TextColor3 = Color3.fromRGB(200,200,200)
+--// Minimize Button
+local Min = Instance.new("TextButton", Top)
+Min.Size = UDim2.new(0,24,0,24)
+Min.Position = UDim2.new(1,-28,0.5,-12)
+Min.Text = "-"
+Min.Font = Enum.Font.GothamBold
+Min.TextSize = 18
+Min.BackgroundColor3 = Color3.fromRGB(70,70,90)
+Min.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", Min).CornerRadius = UDim.new(1,0)
 
---// TextBox
-local NameBox = Instance.new("TextBox", Inner)
-NameBox.Size = UDim2.new(1,-40,0,34)
-NameBox.Position = UDim2.new(0,20,0,78)
-NameBox.PlaceholderText = "Username"
-NameBox.ClearTextOnFocus = false
-NameBox.Font = Enum.Font.Gotham
-NameBox.TextSize = 13
-NameBox.TextColor3 = Color3.fromRGB(255,255,255)
-NameBox.BackgroundColor3 = Color3.fromRGB(50,50,65)
-Instance.new("UICorner", NameBox).CornerRadius = UDim.new(0,8)
+--// Content
+local Content = Instance.new("Frame", Inner)
+Content.Size = UDim2.new(1,0,1,-32)
+Content.Position = UDim2.new(0,0,0,32)
+Content.BackgroundTransparency = 1
 
---// Button
-local StealButton = Instance.new("TextButton", Inner)
-StealButton.Size = UDim2.new(1,-40,0,36)
-StealButton.Position = UDim2.new(0,20,0,120)
-StealButton.Text = "Steal Char"
-StealButton.Font = Enum.Font.GothamBold
-StealButton.TextSize = 14
-StealButton.TextColor3 = Color3.fromRGB(255,255,255)
-StealButton.BackgroundColor3 = Color3.fromRGB(80,130,255)
-Instance.new("UICorner", StealButton).CornerRadius = UDim.new(0,8)
+local Info = Instance.new("TextLabel", Content)
+Info.Size = UDim2.new(1,-16,0,28)
+Info.Position = UDim2.new(0,8,0,6)
+Info.BackgroundTransparency = 1
+Info.TextWrapped = true
+Info.Text = "Type the person's nickname below."
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 12
+Info.TextColor3 = Color3.fromRGB(200,200,200)
 
---// Status
-local Status = Instance.new("TextLabel", Inner)
-Status.Size = UDim2.new(1,-20,0,22)
-Status.Position = UDim2.new(0,10,1,-26)
+local Box = Instance.new("TextBox", Content)
+Box.Size = UDim2.new(1,-20,0,30)
+Box.Position = UDim2.new(0,10,0,40)
+Box.PlaceholderText = "Username"
+Box.ClearTextOnFocus = false
+Box.Font = Enum.Font.Gotham
+Box.TextSize = 13
+Box.TextColor3 = Color3.fromRGB(255,255,255)
+Box.BackgroundColor3 = Color3.fromRGB(50,50,65)
+Instance.new("UICorner", Box).CornerRadius = UDim.new(0,8)
+
+local Btn = Instance.new("TextButton", Content)
+Btn.Size = UDim2.new(1,-20,0,32)
+Btn.Position = UDim2.new(0,10,0,78)
+Btn.Text = "Steal Char"
+Btn.Font = Enum.Font.GothamBold
+Btn.TextSize = 13
+Btn.TextColor3 = Color3.fromRGB(255,255,255)
+Btn.BackgroundColor3 = Color3.fromRGB(90,130,255)
+Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,8)
+
+local Status = Instance.new("TextLabel", Content)
+Status.Size = UDim2.new(1,-16,0,20)
+Status.Position = UDim2.new(0,8,1,-22)
 Status.BackgroundTransparency = 1
 Status.Font = Enum.Font.Gotham
 Status.TextSize = 12
 Status.Text = ""
 
---// STEAL FUNCTION (FIX REAL)
+--================= CLONE VISUAL (FUNCIONA EM QUALQUER JOGO) =================
+
+local clonedModel
+local followConn
+
 local function StealCharacter(username)
 	Status.TextColor3 = Color3.fromRGB(200,200,200)
 	Status.Text = "Copying skin..."
 
-	local success, userId = pcall(function()
+	if followConn then followConn:Disconnect() end
+	if clonedModel then clonedModel:Destroy() end
+
+	local ok, userId = pcall(function()
 		return Players:GetUserIdFromNameAsync(username)
 	end)
-	if not success then
+	if not ok then
 		Status.TextColor3 = Color3.fromRGB(255,120,120)
 		Status.Text = "Invalid username"
 		return
 	end
 
-	local success2, desc = pcall(function()
-		return Players:GetHumanoidDescriptionFromUserId(userId)
+	local ok2, model = pcall(function()
+		return Players:CreateHumanoidModelFromUserId(userId)
 	end)
-	if not success2 then
+	if not ok2 or not model then
 		Status.TextColor3 = Color3.fromRGB(255,120,120)
-		Status.Text = "Failed to get appearance"
+		Status.Text = "Failed to load avatar"
 		return
 	end
 
-	local char = player.Character or player.CharacterAdded:Wait()
-	player.CharacterAppearanceLoaded:Wait()
+	model.Name = "MH_StolenCharacter"
+	model.Parent = workspace
+	clonedModel = model
 
-	local hum = char:WaitForChild("Humanoid")
-	hum:ApplyDescription(desc)
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hrp = char:WaitForChild("HumanoidRootPart")
+	model:SetPrimaryPartCFrame(hrp.CFrame)
+
+	-- esconde seu personagem
+	for _,v in ipairs(char:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.LocalTransparencyModifier = 1
+		end
+	end
+
+	-- segue o player
+	followConn = RunService.RenderStepped:Connect(function()
+		if clonedModel and clonedModel.PrimaryPart and hrp then
+			clonedModel:SetPrimaryPartCFrame(hrp.CFrame)
+		end
+	end)
 
 	Status.TextColor3 = Color3.fromRGB(120,255,120)
 	Status.Text = "Skin copied successfully"
 end
 
-StealButton.MouseButton1Click:Connect(function()
-	if NameBox.Text ~= "" then
-		StealCharacter(NameBox.Text)
+Btn.MouseButton1Click:Connect(function()
+	if Box.Text ~= "" then
+		StealCharacter(Box.Text)
 	end
 end)
 
---// DRAG (PC + MOBILE)
+--================= MINIMIZAR =================
+local minimized = false
+Min.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	Content.Visible = not minimized
+	Min.Text = minimized and "+" or "-"
+	Main.Size = minimized and UDim2.new(0,260,0,32) or UDim2.new(0,260,0,180)
+end)
+
+--================= DRAG (SEM BUG, PC + MOBILE) =================
 do
 	local dragging, startPos, startInput
-
-	Title.InputBegan:Connect(function(input)
+	Top.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1
 		or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			startInput = input.Position
-			startPos = MainFrame.Position
+			startPos = Main.Position
 		end
 	end)
 
@@ -161,7 +210,7 @@ do
 		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
 		or input.UserInputType == Enum.UserInputType.Touch) then
 			local delta = input.Position - startInput
-			MainFrame.Position = UDim2.new(
+			Main.Position = UDim2.new(
 				startPos.X.Scale, startPos.X.Offset + delta.X,
 				startPos.Y.Scale, startPos.Y.Offset + delta.Y
 			)
