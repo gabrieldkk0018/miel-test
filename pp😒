@@ -1,0 +1,191 @@
+--// Services
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+
+local LocalPlayer = Players.LocalPlayer
+
+--// GUI Base
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MielHubPanel"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 420)
+MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 14)
+
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Thickness = 1
+Stroke.Transparency = 0.9
+
+--// Top Bar
+local TopBar = Instance.new("Frame", MainFrame)
+TopBar.Size = UDim2.new(1, 0, 0, 56)
+TopBar.BackgroundTransparency = 1
+
+local Title = Instance.new("TextLabel", TopBar)
+Title.Size = UDim2.new(1, -24, 1, 0)
+Title.Position = UDim2.new(0, 60, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.Text = "Miel hub | Admin Abuse Helper"
+Title.TextSize = 22
+Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+local CloseBTN = Instance.new("TextButton", TopBar)
+CloseBTN.Size = UDim2.new(0, 28, 0, 28)
+CloseBTN.Position = UDim2.new(1, -36, 0.5, -14)
+CloseBTN.BackgroundColor3 = Color3.fromRGB(48, 48, 48)
+CloseBTN.Font = Enum.Font.GothamBold
+CloseBTN.Text = "X"
+CloseBTN.TextSize = 20
+CloseBTN.TextColor3 = Color3.fromRGB(240, 240, 240)
+CloseBTN.AutoButtonColor = false
+Instance.new("UICorner", CloseBTN).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", CloseBTN).Transparency = 0.9
+
+--// Scrolling Frame
+local Scroll = Instance.new("ScrollingFrame", MainFrame)
+Scroll.Size = UDim2.new(1, -24, 1, -80)
+Scroll.Position = UDim2.new(0, 12, 0, 64)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 8
+Scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+
+local Layout = Instance.new("UIListLayout", Scroll)
+Layout.Padding = UDim.new(0, 12)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+local Options = {}
+
+--// Create Toggle Function
+local function CreateToggle(name)
+    local Holder = Instance.new("Frame")
+    Holder.Size = UDim2.new(0.95, 0, 0, 66)
+    Holder.BackgroundTransparency = 1
+    Holder.Parent = Scroll
+
+    local Tile = Instance.new("Frame", Holder)
+    Tile.Size = UDim2.new(1, 0, 1, 0)
+    Tile.BackgroundColor3 = Color3.fromRGB(33, 33, 33)
+    Tile.BorderSizePixel = 0
+    Instance.new("UICorner", Tile).CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", Tile).Transparency = 0.9
+
+    -- Icon
+    local Icon = Instance.new("Frame", Tile)
+    Icon.Size = UDim2.new(0, 46, 0, 46)
+    Icon.Position = UDim2.new(0, 10, 0.5, -23)
+    Icon.BackgroundColor3 = Color3.fromRGB(46, 46, 46)
+    Instance.new("UICorner", Icon).CornerRadius = UDim.new(0, 10)
+
+    local FirstLetter = Instance.new("TextLabel", Icon)
+    FirstLetter.Size = UDim2.new(1, 0, 1, 0)
+    FirstLetter.BackgroundTransparency = 1
+    FirstLetter.Font = Enum.Font.GothamBold
+    FirstLetter.Text = string.sub(name, 1, 1)
+    FirstLetter.TextColor3 = Color3.fromRGB(220, 220, 220)
+    FirstLetter.TextSize = 18
+
+    -- Label
+    local Label = Instance.new("TextLabel", Tile)
+    Label.Size = UDim2.new(0.58, 0, 1, 0)
+    Label.Position = UDim2.new(0, 66, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Font = Enum.Font.GothamSemibold
+    Label.Text = name
+    Label.TextColor3 = Color3.fromRGB(240, 240, 240)
+    Label.TextSize = 16
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Toggle Switch
+    local Switch = Instance.new("Frame", Tile)
+    Switch.Size = UDim2.new(0, 84, 0, 36)
+    Switch.Position = UDim2.new(1, -100, 0.5, -18)
+    Switch.BackgroundColor3 = Color3.fromRGB(58, 58, 58)
+    Instance.new("UICorner", Switch).CornerRadius = UDim.new(0, 18)
+    Instance.new("UIStroke", Switch).Transparency = 0.9
+
+    local Circle = Instance.new("Frame", Switch)
+    Circle.Size = UDim2.new(0, 28, 0, 28)
+    Circle.Position = UDim2.new(0, 6, 0, 4)
+    Circle.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+    Instance.new("UICorner", Circle).CornerRadius = UDim.new(0, 14)
+
+    local Button = Instance.new("TextButton", Tile)
+    Button.Size = UDim2.new(1, 0, 1, 0)
+    Button.BackgroundTransparency = 1
+    Button.Text = ""
+
+    local State = false
+    local Changed = Instance.new("BindableEvent")
+
+    local function SetState(new)
+        State = new
+
+        if State then
+            TweenService:Create(Circle, TweenInfo.new(0.22), {
+                Position = UDim2.new(1, -34, 0, 4)
+            }):Play()
+
+            TweenService:Create(Switch, TweenInfo.new(0.22), {
+                BackgroundColor3 = Color3.fromRGB(45, 135, 255)
+            }):Play()
+
+            TweenService:Create(Icon, TweenInfo.new(0.22), {
+                BackgroundColor3 = Color3.fromRGB(38, 120, 255)
+            }):Play()
+        else
+            TweenService:Create(Circle, TweenInfo.new(0.22), {
+                Position = UDim2.new(0, 6, 0, 4)
+            }):Play()
+
+            TweenService:Create(Switch, TweenInfo.new(0.22), {
+                BackgroundColor3 = Color3.fromRGB(58, 58, 58)
+            }):Play()
+
+            TweenService:Create(Icon, TweenInfo.new(0.22), {
+                BackgroundColor3 = Color3.fromRGB(46, 46, 46)
+            }):Play()
+        end
+
+        Changed:Fire(State)
+    end
+
+    Button.MouseButton1Click:Connect(function()
+        SetState(not State)
+    end)
+
+    return {
+        Holder = Holder,
+        GetState = function() return State end,
+        SetState = SetState,
+        Changed = Changed.Event
+    }
+end
+
+--// Create Default Toggles
+for i, name in ipairs({ "Âncora", "Auto Comprar" }) do
+    local toggle = CreateToggle(name)
+    toggle.Holder.LayoutOrder = i
+    Options[name] = toggle
+end
+
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Scroll.CanvasSize = UDim2.new(0,0,0, Layout.AbsoluteContentSize.Y + 8)
+end)
+
+CloseBTN.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
