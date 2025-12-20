@@ -1,0 +1,218 @@
+--==============================================================--
+--     MH SPEED + GUI ARCO-ÍRIS (EDIT PREMIUM)
+--==============================================================--
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+-- Evita duplicar GUI
+if player.PlayerGui:FindFirstChild("MHSpeed") then
+	player.PlayerGui.MHSpeed:Destroy()
+end
+
+--======================== CONFIG ==============================--
+
+local SPEED = 27.4
+local TOGGLE = Enum.KeyCode.F
+local Enabled = false
+local SpeedConn
+
+--======================== GUI =========================--
+
+local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+screenGui.Name = "MHSpeed"
+screenGui.ResetOnSpawn = false
+
+local GUI_WIDTH = 250
+local TITLE_HEIGHT = 26
+local PADDING = 8
+local BUTTON_HEIGHT = 45
+local SPEED_LABEL_HEIGHT = 20
+
+local mainGuiFrame = Instance.new("Frame")
+mainGuiFrame.Size = UDim2.new(0, GUI_WIDTH, 0, 165)
+mainGuiFrame.AnchorPoint = Vector2.new(1, 0)
+mainGuiFrame.Position = UDim2.new(1, -10, 0, 205)
+mainGuiFrame.BackgroundColor3 = Color3.fromRGB(22,22,32)
+mainGuiFrame.BorderSizePixel = 0
+mainGuiFrame.Parent = screenGui
+Instance.new("UICorner", mainGuiFrame).CornerRadius = UDim.new(0,12)
+
+--======================== RGB BORDA =========================--
+
+local borderFrame = Instance.new("Frame", mainGuiFrame)
+borderFrame.Size = UDim2.new(1,0,1,0)
+borderFrame.BackgroundColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", borderFrame).CornerRadius = UDim.new(0,12)
+
+local rainbowGradient = Instance.new("UIGradient", borderFrame)
+rainbowGradient.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
+	ColorSequenceKeypoint.new(0.15, Color3.fromRGB(255,128,0)),
+	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(255,255,0)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0,255,0)),
+	ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0,128,255)),
+	ColorSequenceKeypoint.new(0.82, Color3.fromRGB(0,0,255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255)),
+})
+
+RunService.Heartbeat:Connect(function(dt)
+	rainbowGradient.Rotation = (rainbowGradient.Rotation + dt * 60) % 360
+end)
+
+--======================== CONTEÚDO =========================--
+
+local innerFrame = Instance.new("Frame", borderFrame)
+innerFrame.Size = UDim2.new(1,-6,1,-6)
+innerFrame.Position = UDim2.new(0,3,0,3)
+innerFrame.BackgroundColor3 = Color3.fromRGB(28,28,40)
+Instance.new("UICorner", innerFrame).CornerRadius = UDim.new(0,10)
+
+--======================== TÍTULO =========================--
+
+local titleLabel = Instance.new("TextLabel", innerFrame)
+titleLabel.Size = UDim2.new(1,0,0,TITLE_HEIGHT)
+titleLabel.Text = "MH Speed"
+titleLabel.Font = Enum.Font.GothamBold
+titleLabel.TextSize = 16
+titleLabel.TextColor3 = Color3.fromRGB(235,235,255)
+titleLabel.BackgroundColor3 = Color3.fromRGB(35,35,50)
+Instance.new("UICorner", titleLabel).CornerRadius = UDim.new(0,8)
+
+-- Drag PC + Mobile
+do
+	local dragging, dragStart, startPos
+	titleLabel.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1
+		or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = mainGuiFrame.Position
+		end
+	end)
+	titleLabel.InputEnded:Connect(function() dragging = false end)
+	UIS.InputChanged:Connect(function(input)
+		if dragging then
+			local delta = input.Position - dragStart
+			mainGuiFrame.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+--======================== LABEL SPEED =========================--
+
+local speedLabel = Instance.new("TextLabel", innerFrame)
+speedLabel.Position = UDim2.new(0,PADDING,0,TITLE_HEIGHT+PADDING)
+speedLabel.Size = UDim2.new(1,-20,0,SPEED_LABEL_HEIGHT)
+speedLabel.Text = "Speed Value: 29"
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextSize = 14
+speedLabel.TextColor3 = Color3.fromRGB(170,170,255)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+--======================== BOTÃO =========================--
+
+local speedBtn = Instance.new("TextButton", innerFrame)
+speedBtn.Size = UDim2.new(1,-20,0,BUTTON_HEIGHT)
+speedBtn.Position = UDim2.new(0,PADDING,0,TITLE_HEIGHT+PADDING*2+SPEED_LABEL_HEIGHT)
+speedBtn.BackgroundColor3 = Color3.fromRGB(38,38,55)
+speedBtn.AutoButtonColor = false
+Instance.new("UICorner", speedBtn).CornerRadius = UDim.new(0,8)
+
+local stroke = Instance.new("UIStroke", speedBtn)
+stroke.Thickness = 1
+stroke.Color = Color3.fromRGB(120,120,180)
+stroke.Transparency = 0.5
+
+local speedText = Instance.new("TextLabel", speedBtn)
+speedText.Size = UDim2.new(1,-70,1,0)
+speedText.Text = "Speed Boost (F): OFF"
+speedText.Font = Enum.Font.GothamBold
+speedText.TextSize = 14
+speedText.TextColor3 = Color3.fromRGB(235,235,255)
+speedText.BackgroundTransparency = 1
+
+-- Toggle visual
+local toggleTrack = Instance.new("Frame", speedBtn)
+toggleTrack.Size = UDim2.new(0,52,0,24)
+toggleTrack.Position = UDim2.new(1,-10,0.5,0)
+toggleTrack.AnchorPoint = Vector2.new(1,0.5)
+toggleTrack.BackgroundColor3 = Color3.fromRGB(100,100,100)
+Instance.new("UICorner", toggleTrack).CornerRadius = UDim.new(1,0)
+
+local toggleCircle = Instance.new("Frame", toggleTrack)
+toggleCircle.Size = UDim2.new(0,18,0,18)
+toggleCircle.Position = UDim2.new(0,4,0.5,0)
+toggleCircle.AnchorPoint = Vector2.new(0,0.5)
+toggleCircle.BackgroundColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", toggleCircle).CornerRadius = UDim.new(1,0)
+
+--======================== FOOTER =========================--
+
+local footer = Instance.new("TextLabel", innerFrame)
+footer.Position = UDim2.new(0,PADDING,1,-22)
+footer.Size = UDim2.new(1,-20,0,18)
+footer.Text = "discord para suporte: miel, tskcommunity"
+footer.Font = Enum.Font.GothamBold
+footer.TextSize = 12
+footer.TextColor3 = Color3.fromRGB(180,180,255)
+footer.BackgroundTransparency = 1
+footer.TextXAlignment = Enum.TextXAlignment.Left
+
+--======================== FUNÇÕES =========================--
+
+local function UpdateToggle(state)
+	local posOn = toggleTrack.AbsoluteSize.X - toggleCircle.AbsoluteSize.X - 4
+	TweenService:Create(toggleTrack, TweenInfo.new(0.25), {
+		BackgroundColor3 = state and Color3.fromRGB(70,200,70) or Color3.fromRGB(100,100,100)
+	}):Play()
+
+	TweenService:Create(toggleCircle, TweenInfo.new(0.25), {
+		Position = UDim2.new(0, state and posOn or 4, 0.5, 0)
+	}):Play()
+
+	speedText.Text = "Speed Boost (F): " .. (state and "ON" or "OFF")
+end
+
+local function StartSpeed()
+	if SpeedConn then return end
+	SpeedConn = RunService.RenderStepped:Connect(function()
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum then return end
+
+		local dir = hum.MoveDirection
+		if dir.Magnitude > 0 then
+			hrp.AssemblyLinearVelocity = Vector3.new(dir.X*SPEED, hrp.AssemblyLinearVelocity.Y, dir.Z*SPEED)
+		end
+		hrp.AssemblyAngularVelocity = Vector3.zero
+	end)
+end
+
+local function StopSpeed()
+	if SpeedConn then SpeedConn:Disconnect() SpeedConn = nil end
+end
+
+local function Toggle()
+	Enabled = not Enabled
+	UpdateToggle(Enabled)
+	if Enabled then StartSpeed() else StopSpeed() end
+end
+
+--======================== CONTROLES =========================--
+
+speedBtn.MouseButton1Click:Connect(Toggle)
+UIS.InputBegan:Connect(function(input,gp)
+	if not gp and input.KeyCode == TOGGLE then Toggle() end
+end)
+
+UpdateToggle(false)
