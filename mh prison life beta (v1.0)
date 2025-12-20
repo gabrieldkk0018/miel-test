@@ -1,0 +1,238 @@
+--==================================================
+-- MH PRISON HUB v1
+-- FPS BOOST | ESP | AIMBOT
+--==================================================
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+
+--==================================================
+-- UI BASE
+--==================================================
+
+if game.CoreGui:FindFirstChild("MH_Prison_Hub") then
+	game.CoreGui.MH_Prison_Hub:Destroy()
+end
+
+local Gui = Instance.new("ScreenGui", game.CoreGui)
+Gui.Name = "MH_Prison_Hub"
+Gui.ResetOnSpawn = false
+
+local Main = Instance.new("Frame", Gui)
+Main.Size = UDim2.new(0,260,0,200)
+Main.Position = UDim2.new(1,-280,0,200)
+Main.BackgroundColor3 = Color3.fromRGB(30,30,40)
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Instance.new("UICorner",Main).CornerRadius = UDim.new(0,12)
+
+-- RGB border
+local Stroke = Instance.new("UIStroke",Main)
+Stroke.Thickness = 2
+Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+RunService.RenderStepped:Connect(function()
+	Stroke.Color = Color3.fromHSV((tick()%5)/5,1,1)
+end)
+
+--==================================================
+-- TOP BAR
+--==================================================
+
+local Top = Instance.new("TextButton",Main)
+Top.Size = UDim2.new(1,0,0,36)
+Top.Text = "MH Prison Hub"
+Top.Font = Enum.Font.GothamBold
+Top.TextSize = 14
+Top.TextColor3 = Color3.fromRGB(255,255,255)
+Top.BackgroundColor3 = Color3.fromRGB(40,40,55)
+Top.AutoButtonColor = false
+
+local MinBtn = Instance.new("TextButton",Top)
+MinBtn.Size = UDim2.new(0,30,1,0)
+MinBtn.Position = UDim2.new(1,-32,0,0)
+MinBtn.Text = "-"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+MinBtn.BackgroundTransparency = 1
+MinBtn.TextColor3 = Color3.fromRGB(255,255,255)
+
+--==================================================
+-- CONTENT
+--==================================================
+
+local Content = Instance.new("Frame",Main)
+Content.Position = UDim2.new(0,0,0,36)
+Content.Size = UDim2.new(1,0,1,-36)
+Content.BackgroundTransparency = 1
+
+local function makeButton(text,y)
+	local b = Instance.new("TextButton",Content)
+	b.Size = UDim2.new(1,-20,0,36)
+	b.Position = UDim2.new(0,10,0,y)
+	b.BackgroundColor3 = Color3.fromRGB(45,45,65)
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.Font = Enum.Font.GothamBold
+	b.TextSize = 13
+	b.Text = text..": OFF"
+	Instance.new("UICorner",b).CornerRadius = UDim.new(0,8)
+	return b
+end
+
+local FPSBtn = makeButton("FPS Boost",10)
+local ESPBtn = makeButton("ESP",56)
+local AIMBtn = makeButton("Aimbot",102)
+
+--==================================================
+-- MINIMIZE FIX (SEM BUG)
+--==================================================
+
+local minimized = false
+local openSize = UDim2.new(0,260,0,200)
+local miniSize = UDim2.new(0,260,0,36)
+
+MinBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		Content.Visible = false
+		MinBtn.Text = "+"
+		TweenService:Create(Main,TweenInfo.new(0.25),{Size=miniSize}):Play()
+	else
+		MinBtn.Text = "-"
+		TweenService:Create(Main,TweenInfo.new(0.25),{Size=openSize}):Play()
+		task.wait(0.15)
+		Content.Visible = true
+	end
+end)
+
+--==================================================
+-- FPS BOOST
+--==================================================
+
+local FPS_ON = false
+local function FPSBoost(state)
+	FPS_ON = state
+	if state then
+		Lighting.GlobalShadows = false
+		Lighting.FogEnd = 1e9
+		settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+	end
+	FPSBtn.Text = "FPS Boost: "..(state and "ON" or "OFF")
+end
+
+FPSBtn.MouseButton1Click:Connect(function()
+	FPSBoost(not FPS_ON)
+end)
+
+--==================================================
+-- ESP (PRISON LIFE)
+--==================================================
+
+local ESP_ON = false
+local ESPFolder = Instance.new("Folder",Gui)
+
+local function applyESP(plr)
+	if plr == LocalPlayer then return end
+	if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
+
+	local hl = Instance.new("Highlight")
+	hl.Adornee = plr.Character
+	hl.DepthMode = Enum.HighlightDepthMode.Occluded
+	hl.OutlineTransparency = 1
+
+	if plr.Team and plr.Team.Name == "Guards" then
+		hl.FillColor = Color3.fromRGB(0,170,255)
+	else
+		hl.FillColor = Color3.fromRGB(255,80,80)
+	end
+
+	hl.Parent = ESPFolder
+end
+
+local function RefreshESP()
+	ESPFolder:ClearAllChildren()
+	if not ESP_ON then return end
+	for _,p in pairs(Players:GetPlayers()) do
+		applyESP(p)
+	end
+end
+
+ESPBtn.MouseButton1Click:Connect(function()
+	ESP_ON = not ESP_ON
+	ESPBtn.Text = "ESP: "..(ESP_ON and "ON" or "OFF")
+	RefreshESP()
+end)
+
+Players.PlayerAdded:Connect(RefreshESP)
+Players.PlayerRemoving:Connect(RefreshESP)
+
+--==================================================
+-- AIMBOT (SUAVE + TEAM CHECK)
+--==================================================
+
+local AIM_ON = false
+local Holding = false
+local FOV = 120
+
+UserInputService.InputBegan:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton2 then
+		Holding = true
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(i)
+	if i.UserInputType == Enum.UserInputType.MouseButton2 then
+		Holding = false
+	end
+end)
+
+local function getTarget()
+	local closest,dist = nil,FOV
+	for _,p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Team ~= LocalPlayer.Team and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+			local pos,vis = Camera:WorldToScreenPoint(p.Character.HumanoidRootPart.Position)
+			if vis then
+				local d = (Vector2.new(pos.X,pos.Y)-UserInputService:GetMouseLocation()).Magnitude
+				if d < dist then
+					dist = d
+					closest = p
+				end
+			end
+		end
+	end
+	return closest
+end
+
+RunService.RenderStepped:Connect(function()
+	if AIM_ON and Holding then
+		local t = getTarget()
+		if t and t.Character then
+			Camera.CFrame = Camera.CFrame:Lerp(
+				CFrame.new(Camera.CFrame.Position,t.Character.HumanoidRootPart.Position),
+				0.15
+			)
+		end
+	end
+end)
+
+AIMBtn.MouseButton1Click:Connect(function()
+	AIM_ON = not AIM_ON
+	AIMBtn.Text = "Aimbot: "..(AIM_ON and "ON" or "OFF")
+end)
+
+--==================================================
+-- NOTIFY
+--==================================================
+
+pcall(function()
+	game.StarterGui:SetCore("SendNotification",{
+		Title="MH Prison Hub",
+		Text="Loaded successfully!",
+		Duration=4
+	})
+end)
