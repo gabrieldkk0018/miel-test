@@ -1,0 +1,58 @@
+--==============================================================--
+--            MH FPS BOOST (AUTO ON + NOTIFICAÇÃO)
+--==============================================================--
+
+local Lighting = game:GetService("Lighting")
+local StarterGui = game:GetService("StarterGui")
+
+--======================== NOTIFICAÇÃO =========================--
+
+pcall(function()
+	StarterGui:SetCore("SendNotification", {
+		Title = "FPS BOOST ON",
+		Text = "Bom jogo!",
+		Duration = 5
+	})
+end)
+
+--======================== FPS BOOST =========================--
+
+-- Lighting básico
+Lighting.GlobalShadows = false
+Lighting.FogEnd = 9e9
+Lighting.Brightness = 1
+Lighting.ExposureCompensation = 0
+
+-- Remove efeitos gráficos
+for _,v in pairs(Lighting:GetChildren()) do
+	if v:IsA("PostEffect") then
+		v:Destroy()
+	end
+end
+
+-- Qualidade mínima (estilo Minecraft)
+pcall(function()
+	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+end)
+
+-- Mundo low graphics
+for _,v in pairs(workspace:GetDescendants()) do
+	if v:IsA("BasePart") then
+		v.Material = Enum.Material.Plastic
+		v.Reflectance = 0
+	elseif v:IsA("Decal") or v:IsA("Texture") then
+		v:Destroy()
+	elseif v:IsA("ParticleEmitter")
+	or v:IsA("Trail")
+	or v:IsA("Beam") then
+		v.Enabled = false
+	end
+end
+
+-- Água ultra leve
+pcall(function()
+	workspace.Terrain.WaterWaveSize = 0
+	workspace.Terrain.WaterWaveSpeed = 0
+	workspace.Terrain.WaterReflectance = 0
+	workspace.Terrain.WaterTransparency = 1
+end)
