@@ -1,58 +1,255 @@
 --==============================================================--
---            MH FPS BOOST (AUTO ON + NOTIFICAÇÃO)
+--              MH PRISON HUB (FPS + VISUAL ASSIST)
 --==============================================================--
 
+-- SERVICES
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Lighting = game:GetService("Lighting")
 local StarterGui = game:GetService("StarterGui")
+local Workspace = game:GetService("Workspace")
 
---======================== NOTIFICAÇÃO =========================--
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
 
+-- CLEAN OLD GUI
+if LocalPlayer.PlayerGui:FindFirstChild("MHPrisonHub") then
+	LocalPlayer.PlayerGui.MHPrisonHub:Destroy()
+end
+
+--======================== NOTIF =========================--
 pcall(function()
 	StarterGui:SetCore("SendNotification", {
-		Title = "FPS BOOST ON",
-		Text = "Bom jogo!",
-		Duration = 5
+		Title = "MH Prison Hub",
+		Text = "Carregado com sucesso",
+		Duration = 4
 	})
 end)
 
+--======================== GUI =========================--
+local gui = Instance.new("ScreenGui", LocalPlayer.PlayerGui)
+gui.Name = "MHPrisonHub"
+gui.ResetOnSpawn = false
+
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 260, 0, 200)
+main.Position = UDim2.new(1, -15, 0, 200)
+main.AnchorPoint = Vector2.new(1,0)
+main.BackgroundColor3 = Color3.fromRGB(22,22,32)
+main.BorderSizePixel = 0
+Instance.new("UICorner", main).CornerRadius = UDim.new(0,12)
+
+-- RGB BORDER
+local border = Instance.new("Frame", main)
+border.Size = UDim2.new(1,0,1,0)
+border.BackgroundColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", border).CornerRadius = UDim.new(0,12)
+
+local grad = Instance.new("UIGradient", border)
+grad.Color = ColorSequence.new{
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255,0,0)),
+	ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0,255,0)),
+	ColorSequenceKeypoint.new(0.66, Color3.fromRGB(0,0,255)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255,0,255)),
+}
+
+RunService.Heartbeat:Connect(function(dt)
+	grad.Rotation = (grad.Rotation + dt*60) % 360
+end)
+
+local inner = Instance.new("Frame", border)
+inner.Size = UDim2.new(1,-6,1,-6)
+inner.Position = UDim2.new(0,3,0,3)
+inner.BackgroundColor3 = Color3.fromRGB(28,28,40)
+Instance.new("UICorner", inner).CornerRadius = UDim.new(0,10)
+
+-- TITLE
+local title = Instance.new("TextLabel", inner)
+title.Size = UDim2.new(1,0,0,28)
+title.Text = "MH Prison Hub"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextColor3 = Color3.fromRGB(235,235,255)
+title.BackgroundColor3 = Color3.fromRGB(35,35,50)
+Instance.new("UICorner", title).CornerRadius = UDim.new(0,8)
+
+-- DRAG
+do
+	local dragging, startPos, dragStart
+	title.InputBegan:Connect(function(i)
+		if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			startPos = main.Position
+			dragStart = i.Position
+		end
+	end)
+	title.InputEnded:Connect(function() dragging = false end)
+	UIS.InputChanged:Connect(function(i)
+		if dragging then
+			local d = i.Position - dragStart
+			main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+		end
+	end)
+end
+
+-- MINIMIZE
+local minimized = false
+local minBtn = Instance.new("TextButton", title)
+minBtn.Size = UDim2.new(0,28,0,20)
+minBtn.Position = UDim2.new(1,-32,0.5,-10)
+minBtn.Text = "—"
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 16
+minBtn.BackgroundTransparency = 1
+minBtn.TextColor3 = Color3.fromRGB(200,200,255)
+
+local contentY = 34
+minBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	TweenService:Create(main, TweenInfo.new(0.25), {
+		Size = minimized and UDim2.new(0,260,0,40) or UDim2.new(0,260,0,200)
+	}):Play()
+end)
+
+--======================== BUTTON MAKER =========================--
+local function makeButton(text, y)
+	local b = Instance.new("TextButton", inner)
+	b.Size = UDim2.new(1,-20,0,40)
+	b.Position = UDim2.new(0,10,0,y)
+	b.BackgroundColor3 = Color3.fromRGB(38,38,55)
+	b.AutoButtonColor = false
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	local s = Instance.new("UIStroke", b)
+	s.Thickness = 1
+	s.Color = Color3.fromRGB(120,120,180)
+	s.Transparency = 0.5
+	local t = Instance.new("TextLabel", b)
+	t.Size = UDim2.new(1,-10,1,0)
+	t.Text = text
+	t.Font = Enum.Font.GothamBold
+	t.TextSize = 14
+	t.TextColor3 = Color3.fromRGB(235,235,255)
+	t.BackgroundTransparency = 1
+	return b, t
+end
+
 --======================== FPS BOOST =========================--
-
--- Lighting básico
-Lighting.GlobalShadows = false
-Lighting.FogEnd = 9e9
-Lighting.Brightness = 1
-Lighting.ExposureCompensation = 0
-
--- Remove efeitos gráficos
-for _,v in pairs(Lighting:GetChildren()) do
-	if v:IsA("PostEffect") then
-		v:Destroy()
+local FPS_ON = false
+local function enableFPS()
+	Lighting.GlobalShadows = false
+	Lighting.FogEnd = 9e9
+	for _,v in ipairs(Lighting:GetChildren()) do
+		if v:IsA("PostEffect") then v:Destroy() end
+	end
+	pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+	for _,v in ipairs(workspace:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.Material = Enum.Material.Plastic
+			v.Reflectance = 0
+		elseif v:IsA("Decal") or v:IsA("Texture") then
+			v:Destroy()
+		elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+			v.Enabled = false
+		end
 	end
 end
 
--- Qualidade mínima (estilo Minecraft)
-pcall(function()
-	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+local fpsBtn, fpsTxt = makeButton("FPS Boost: OFF", contentY)
+contentY += 46
+fpsBtn.MouseButton1Click:Connect(function()
+	FPS_ON = not FPS_ON
+	fpsTxt.Text = "FPS Boost: "..(FPS_ON and "ON" or "OFF")
+	if FPS_ON then enableFPS() end
 end)
 
--- Mundo low graphics
-for _,v in pairs(workspace:GetDescendants()) do
-	if v:IsA("BasePart") then
-		v.Material = Enum.Material.Plastic
-		v.Reflectance = 0
-	elseif v:IsA("Decal") or v:IsA("Texture") then
-		v:Destroy()
-	elseif v:IsA("ParticleEmitter")
-	or v:IsA("Trail")
-	or v:IsA("Beam") then
-		v.Enabled = false
-	end
+--======================== VISUAL ASSIST (LOS) =========================--
+local VA_ON = false
+local holder = Instance.new("Folder", game.CoreGui)
+holder.Name = "MH_VisualAssist"
+local highlights = {}
+
+local TEAM_COLORS = {
+	Guards = Color3.fromRGB(0,140,255),
+	Inmates = Color3.fromRGB(255,140,0),
+	Criminals = Color3.fromRGB(255,0,0),
+	Neutral = Color3.fromRGB(180,180,180)
+}
+
+local function teamColor(plr)
+	if not plr.Team then return TEAM_COLORS.Neutral end
+	local n = plr.Team.Name:lower()
+	if n:find("guard") then return TEAM_COLORS.Guards end
+	if n:find("inmate") then return TEAM_COLORS.Inmates end
+	if n:find("criminal") then return TEAM_COLORS.Criminals end
+	return TEAM_COLORS.Neutral
 end
 
--- Água ultra leve
-pcall(function()
-	workspace.Terrain.WaterWaveSize = 0
-	workspace.Terrain.WaterWaveSpeed = 0
-	workspace.Terrain.WaterReflectance = 0
-	workspace.Terrain.WaterTransparency = 1
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+local function hasLOS(char)
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return false end
+	rayParams.FilterDescendantsInstances = {LocalPlayer.Character, char}
+	local o = Camera.CFrame.Position
+	local d = hrp.Position - o
+	local r = Workspace:Raycast(o, d, rayParams)
+	return r and r.Instance:IsDescendantOf(char)
+end
+
+RunService.RenderStepped:Connect(function()
+	if not VA_ON then
+		for _,h in pairs(highlights) do h:Destroy() end
+		table.clear(highlights)
+		return
+	end
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			local char = plr.Character
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+			if char and hum and hum.Health > 0 and hasLOS(char) then
+				if not highlights[plr] then
+					local hl = Instance.new("Highlight")
+					hl.Adornee = char
+					hl.FillTransparency = 0.4
+					hl.OutlineTransparency = 1
+					hl.Parent = holder
+					highlights[plr] = hl
+				end
+				highlights[plr].FillColor = teamColor(plr)
+			else
+				if highlights[plr] then
+					highlights[plr]:Destroy()
+					highlights[plr] = nil
+				end
+			end
+		end
+	end
 end)
+
+local vaBtn, vaTxt = makeButton("Visual Assist: OFF", contentY)
+contentY += 46
+vaBtn.MouseButton1Click:Connect(function()
+	VA_ON = not VA_ON
+	vaTxt.Text = "Visual Assist: "..(VA_ON and "ON" or "OFF")
+	pcall(function()
+		StarterGui:SetCore("SendNotification", {
+			Title = "Visual Assist",
+			Text = VA_ON and "Ativado (sem atravessar paredes)" or "Desativado",
+			Duration = 3
+		})
+	end)
+end)
+
+-- FOOTER
+local footer = Instance.new("TextLabel", inner)
+footer.Size = UDim2.new(1,-20,0,18)
+footer.Position = UDim2.new(0,10,1,-22)
+footer.Text = "Prison Life | MH Hub"
+footer.Font = Enum.Font.GothamBold
+footer.TextSize = 12
+footer.TextColor3 = Color3.fromRGB(180,180,255)
+footer.BackgroundTransparency = 1
+footer.TextXAlignment = Enum.TextXAlignment.Left
