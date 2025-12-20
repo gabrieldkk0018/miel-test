@@ -1,116 +1,246 @@
--- MH Prison Life v1 (beta)
--- carregado com sucesso!
+--================= MH PRISON LIFE V1 (BETA) =================--
+-- MOBILE ONLY
 -- by: Miel
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 
---================ ORION =================--
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Orion/main/source"))()
+--================= GUI =================--
 
-local Window = OrionLib:MakeWindow({
-	Name = "MH Prison Life v1 (beta)",
-	HidePremium = true,
-	SaveConfig = false,
-	ConfigFolder = "MHPrisonLife"
-})
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "MH_PrisonLife_V1"
+Gui.Parent = game.CoreGui
 
---================ FLAGS =================--
+local Main = Instance.new("Frame", Gui)
+Main.Size = UDim2.new(0,270,0,320)
+Main.Position = UDim2.new(0.5,-135,0.5,-160)
+Main.BackgroundColor3 = Color3.fromRGB(22,22,22)
+Main.BorderSizePixel = 0
+Main.Active = true
 
-local FPSBoost = false
-local ESPEnabled = false
-local ESPWall = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0,12)
 
-local AimbotEnabled = false
-local AimFOV = 180
-local AimSmooth = 0.25
-
-local AimInmates = false
-local AimCriminals = true
-local AimGuards = false
-
---================ FPS BOOST =================--
-
-local function EnableFPS()
-	for _,v in pairs(Lighting:GetChildren()) do
-		if v:IsA("PostEffect") then
-			v.Enabled = false
-		end
+-- Drag Mobile
+local dragging, dragStart, startPos
+Main.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = Main.Position
 	end
-	Lighting.GlobalShadows = false
-	settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-end
-
---================ ESP =================--
-
-local ESPFolder = Instance.new("Folder", game.CoreGui)
-ESPFolder.Name = "MH_ESP"
-
-local function ClearESP()
-	ESPFolder:ClearAllChildren()
-end
-
-local function CreateESP(plr)
-	if plr == LocalPlayer then return end
-	if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
-
-	local hl = Instance.new("Highlight")
-	hl.Adornee = plr.Character
-	hl.OutlineTransparency = 1
-	hl.DepthMode = ESPWall and Enum.HighlightDepthMode.AlwaysOnTop or Enum.HighlightDepthMode.Occluded
-
-	if plr.Team and plr.Team.Name == "Guards" then
-		hl.FillColor = Color3.fromRGB(0,150,255)
-	else
-		hl.FillColor = Color3.fromRGB(255,60,60)
-	end
-
-	hl.Parent = ESPFolder
-end
-
-local function RefreshESP()
-	ClearESP()
-	if not ESPEnabled then return end
-	for _,p in pairs(Players:GetPlayers()) do
-		CreateESP(p)
-	end
-end
-
-Players.PlayerAdded:Connect(function(plr)
-	plr.CharacterAdded:Connect(function()
-		task.wait(0.5)
-		if ESPEnabled then
-			CreateESP(plr)
-		end
-	end)
 end)
 
---================ AIMBOT =================--
+Main.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.Touch then
+		local delta = input.Position - dragStart
+		Main.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+end)
 
-local function ValidTarget(plr)
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- Title
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1,0,0,40)
+Title.BackgroundTransparency = 1
+Title.Text = "MH Prison Life v1 (beta)"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 15
+
+-- Minimize
+local MinBtn = Instance.new("TextButton", Main)
+MinBtn.Size = UDim2.new(0,40,0,30)
+MinBtn.Position = UDim2.new(1,-45,0,5)
+MinBtn.Text = "-"
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 18
+MinBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+MinBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", MinBtn)
+
+-- Content
+local Content = Instance.new("ScrollingFrame", Main)
+Content.Position = UDim2.new(0,0,0,40)
+Content.Size = UDim2.new(1,0,1,-40)
+Content.CanvasSize = UDim2.new(0,0,0,0)
+Content.ScrollBarImageTransparency = 1
+Content.BackgroundTransparency = 1
+
+local layout = Instance.new("UIListLayout", Content)
+layout.Padding = UDim.new(0,10)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	Content.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
+end)
+
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	Content.Visible = not minimized
+	Main.Size = minimized and UDim2.new(0,270,0,40) or UDim2.new(0,270,0,320)
+end)
+
+-- Button creator
+local function createButton(text)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0.9,0,0,40)
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.Text = text
+	btn.Parent = Content
+	Instance.new("UICorner", btn)
+	return btn
+end
+
+--================= BUTTONS =================--
+
+local FPSBtn = createButton("FPS BOOST: OFF")
+local ESPBtn = createButton("ESP: OFF")
+local AIMBtn = createButton("AIMBOT: OFF")
+
+local CriminalBtn = createButton("Aim Criminals: ON")
+local InmateBtn = createButton("Aim Inmates: OFF")
+local GuardBtn = createButton("Aim Guards: OFF")
+
+--================= FPS BOOST =================--
+
+local FPS_ON = false
+
+FPSBtn.MouseButton1Click:Connect(function()
+	FPS_ON = not FPS_ON
+	FPSBtn.Text = "FPS BOOST: "..(FPS_ON and "ON" or "OFF")
+
+	if FPS_ON then
+		for _,v in pairs(workspace:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.Material = Enum.Material.Plastic
+				v.Reflectance = 0
+			elseif v:IsA("Decal") or v:IsA("Texture") then
+				v:Destroy()
+			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+				v.Enabled = false
+			end
+		end
+		Lighting.GlobalShadows = false
+	end
+end)
+
+--================= ESP =================--
+
+local ESP_ON = false
+local ESPFolder = Instance.new("Folder", Gui)
+
+local function applyESP(plr)
+	if not ESP_ON or plr == LocalPlayer then return end
+
+	local function onChar(char)
+		task.wait(0.2)
+		if not ESP_ON then return end
+		if not char:FindFirstChild("HumanoidRootPart") then return end
+
+		if ESPFolder:FindFirstChild(plr.Name) then
+			ESPFolder[plr.Name]:Destroy()
+		end
+
+		local hl = Instance.new("Highlight")
+		hl.Name = plr.Name
+		hl.Adornee = char
+		hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		hl.OutlineTransparency = 1
+
+		if plr.Team and plr.Team.Name == "Guards" then
+			hl.FillColor = Color3.fromRGB(0,170,255)
+		elseif plr.Team and plr.Team.Name == "Criminals" then
+			hl.FillColor = Color3.fromRGB(255,60,60)
+		else
+			hl.FillColor = Color3.fromRGB(255,170,0)
+		end
+
+		hl.Parent = ESPFolder
+	end
+
+	if plr.Character then onChar(plr.Character) end
+	plr.CharacterAdded:Connect(onChar)
+end
+
+local function refreshESP()
+	ESPFolder:ClearAllChildren()
+	if not ESP_ON then return end
+	for _,p in pairs(Players:GetPlayers()) do
+		applyESP(p)
+	end
+end
+
+ESPBtn.MouseButton1Click:Connect(function()
+	ESP_ON = not ESP_ON
+	ESPBtn.Text = "ESP: "..(ESP_ON and "ON" or "OFF")
+	refreshESP()
+end)
+
+Players.PlayerAdded:Connect(function(p)
+	if ESP_ON then
+		applyESP(p)
+	end
+end)
+
+--================= AIMBOT =================--
+
+local AIM_ON = false
+local AIM_DISTANCE = 450 -- alcance maior
+local SMOOTH = 0.15
+
+local AIM_CRIMINALS = true
+local AIM_INMATES = false
+local AIM_GUARDS = false
+
+local function hasLineOfSight(char)
+	local root = char:FindFirstChild("HumanoidRootPart")
+	if not root then return false end
+
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	params.FilterDescendantsInstances = {LocalPlayer.Character, char}
+
+	local result = workspace:Raycast(Camera.CFrame.Position, root.Position - Camera.CFrame.Position, params)
+	return result == nil
+end
+
+local function validTarget(plr)
 	if not plr.Team then return false end
-	if plr.Team.Name == "Inmates" and AimInmates then return true end
-	if plr.Team.Name == "Criminals" and AimCriminals then return true end
-	if plr.Team.Name == "Guards" and AimGuards then return true end
+	if plr.Team.Name == "Criminals" and AIM_CRIMINALS then return true end
+	if plr.Team.Name == "Inmates" and AIM_INMATES then return true end
+	if plr.Team.Name == "Guards" and AIM_GUARDS then return true end
 	return false
 end
 
-local function GetClosest()
+local function getTarget()
 	local closest, dist = nil, math.huge
 	for _,p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer
-		and ValidTarget(p)
+		if p ~= LocalPlayer and validTarget(p)
 		and p.Character
 		and p.Character:FindFirstChild("HumanoidRootPart")
 		and p.Character:FindFirstChild("Humanoid")
-		and p.Character.Humanoid.Health > 0 then
+		and p.Character.Humanoid.Health > 0
+		and hasLineOfSight(p.Character) then
 
-			local d = (Camera.CFrame.Position - p.Character.HumanoidRootPart.Position).Magnitude
-			if d < AimFOV and d < dist then
+			local d = (p.Character.HumanoidRootPart.Position - Camera.CFrame.Position).Magnitude
+			if d < AIM_DISTANCE and d < dist then
 				dist = d
 				closest = p
 			end
@@ -119,108 +249,44 @@ local function GetClosest()
 	return closest
 end
 
+AIMBtn.MouseButton1Click:Connect(function()
+	AIM_ON = not AIM_ON
+	AIMBtn.Text = "AIMBOT: "..(AIM_ON and "ON" or "OFF")
+end)
+
+CriminalBtn.MouseButton1Click:Connect(function()
+	AIM_CRIMINALS = not AIM_CRIMINALS
+	CriminalBtn.Text = "Aim Criminals: "..(AIM_CRIMINALS and "ON" or "OFF")
+end)
+
+InmateBtn.MouseButton1Click:Connect(function()
+	AIM_INMATES = not AIM_INMATES
+	InmateBtn.Text = "Aim Inmates: "..(AIM_INMATES and "ON" or "OFF")
+end)
+
+GuardBtn.MouseButton1Click:Connect(function()
+	AIM_GUARDS = not AIM_GUARDS
+	GuardBtn.Text = "Aim Guards: "..(AIM_GUARDS and "ON" or "OFF")
+end)
+
 RunService.RenderStepped:Connect(function()
-	if AimbotEnabled then
-		local t = GetClosest()
+	if AIM_ON then
+		local t = getTarget()
 		if t and t.Character then
 			Camera.CFrame = Camera.CFrame:Lerp(
 				CFrame.new(Camera.CFrame.Position, t.Character.HumanoidRootPart.Position),
-				AimSmooth
+				SMOOTH
 			)
 		end
 	end
 end)
 
---================ UI =================--
+--================= NOTIFICATION =================--
 
-local MainTab = Window:MakeTab({
-	Name = "Main",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-MainTab:AddToggle({
-	Name = "FPS Boost",
-	Default = true,
-	Callback = function(v)
-		FPSBoost = v
-		if v then EnableFPS() end
-	end
-})
-
-MainTab:AddToggle({
-	Name = "ESP",
-	Default = false,
-	Callback = function(v)
-		ESPEnabled = v
-		RefreshESP()
-	end
-})
-
-MainTab:AddToggle({
-	Name = "ESP através das paredes",
-	Default = true,
-	Callback = function(v)
-		ESPWall = v
-		RefreshESP()
-	end
-})
-
-MainTab:AddToggle({
-	Name = "Aimbot",
-	Default = false,
-	Callback = function(v)
-		AimbotEnabled = v
-	end
-})
-
-MainTab:AddSlider({
-	Name = "Aimbot Alcance",
-	Min = 50,
-	Max = 350,
-	Default = 180,
-	Callback = function(v)
-		AimFOV = v
-	end
-})
-
-MainTab:AddSlider({
-	Name = "Aimbot Smooth",
-	Min = 0.05,
-	Max = 0.5,
-	Default = 0.25,
-	Callback = function(v)
-		AimSmooth = v
-	end
-})
-
-local TeamTab = Window:MakeTab({
-	Name = "Aimbot Team",
-	Icon = "rbxassetid://4483345998"
-})
-
-TeamTab:AddToggle({
-	Name = "Mirar Inmates",
-	Default = false,
-	Callback = function(v)
-		AimInmates = v
-	end
-})
-
-TeamTab:AddToggle({
-	Name = "Mirar Criminals",
-	Default = true,
-	Callback = function(v)
-		AimCriminals = v
-	end
-})
-
-TeamTab:AddToggle({
-	Name = "Mirar Guards",
-	Default = false,
-	Callback = function(v)
-		AimGuards = v
-	end
-})
-
-OrionLib:Init()
+pcall(function()
+	game.StarterGui:SetCore("SendNotification",{
+		Title = "mh prison life v1 (beta)",
+		Text = "carregado com sucesso!\nby: Miel",
+		Duration = 4
+	})
+end)
