@@ -1,292 +1,174 @@
---================= MH PRISON LIFE V1 (BETA) =================--
--- MOBILE ONLY
--- by: Miel
 
+--// MH Prison Life v1.1 (Mobile)
+--// by Miel
+--// ESP • Aimbot • FPS Boost • TP • Escape
+
+-- SERVICES
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
-
+local UIS = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
---================= GUI =================--
+-- STATE
+local State = {
+	Aimbot = false,
+	ESP = false,
+	NameESP = false,
+	DistanceESP = false,
+	TeamFilter = "Criminal", -- Criminal / Guard / Inmate
+	FPSBoost = false
+}
 
-local Gui = Instance.new("ScreenGui")
-Gui.Name = "MH_PrisonLife_V1"
-Gui.Parent = game.CoreGui
+--==============================
+-- UI (leve, mobile)
+--==============================
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "MH_UI"
 
-local Main = Instance.new("Frame", Gui)
-Main.Size = UDim2.new(0,270,0,320)
-Main.Position = UDim2.new(0.5,-135,0.5,-160)
-Main.BackgroundColor3 = Color3.fromRGB(22,22,22)
-Main.BorderSizePixel = 0
-Main.Active = true
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.fromScale(0.4, 0.45)
+main.Position = UDim2.fromScale(0.3, 0.25)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.Active, main.Draggable = true, true
 
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,12)
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.fromScale(1,0.12)
+title.Text = "MH Prison Life v1.1 (beta)"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.TextScaled = true
 
--- Drag Mobile
-local dragging, dragStart, startPos
-Main.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		dragging = true
-		dragStart = input.Position
-		startPos = Main.Position
-	end
-end)
-
-Main.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.Touch then
-		local delta = input.Position - dragStart
-		Main.Position = UDim2.new(
-			startPos.X.Scale, startPos.X.Offset + delta.X,
-			startPos.Y.Scale, startPos.Y.Offset + delta.Y
-		)
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		dragging = false
-	end
-end)
-
--- Title
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1,0,0,40)
-Title.BackgroundTransparency = 1
-Title.Text = "MH Prison Life v1 (beta)"
-Title.TextColor3 = Color3.new(1,1,1)
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 15
-
--- Minimize
-local MinBtn = Instance.new("TextButton", Main)
-MinBtn.Size = UDim2.new(0,40,0,30)
-MinBtn.Position = UDim2.new(1,-45,0,5)
-MinBtn.Text = "-"
-MinBtn.Font = Enum.Font.GothamBold
-MinBtn.TextSize = 18
-MinBtn.BackgroundColor3 = Color3.fromRGB(45,45,45)
-MinBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", MinBtn)
-
--- Content
-local Content = Instance.new("ScrollingFrame", Main)
-Content.Position = UDim2.new(0,0,0,40)
-Content.Size = UDim2.new(1,0,1,-40)
-Content.CanvasSize = UDim2.new(0,0,0,0)
-Content.ScrollBarImageTransparency = 1
-Content.BackgroundTransparency = 1
-
-local layout = Instance.new("UIListLayout", Content)
-layout.Padding = UDim.new(0,10)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	Content.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 10)
-end)
-
-local minimized = false
-MinBtn.MouseButton1Click:Connect(function()
-	minimized = not minimized
-	Content.Visible = not minimized
-	Main.Size = minimized and UDim2.new(0,270,0,40) or UDim2.new(0,270,0,320)
-end)
-
--- Button creator
-local function createButton(text)
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(0.9,0,0,40)
-	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.GothamBold
-	btn.TextSize = 14
-	btn.Text = text
-	btn.Parent = Content
-	Instance.new("UICorner", btn)
-	return btn
+local function btn(txt,y,callback)
+	local b = Instance.new("TextButton", main)
+	b.Size = UDim2.fromScale(0.9,0.08)
+	b.Position = UDim2.fromScale(0.05,y)
+	b.Text = txt
+	b.TextScaled = true
+	b.BackgroundColor3 = Color3.fromRGB(35,35,35)
+	b.TextColor3 = Color3.new(1,1,1)
+	b.MouseButton1Click:Connect(callback)
+	return b
 end
 
---================= BUTTONS =================--
+--==============================
+-- BUTTONS
+--==============================
+btn("AIMBOT ON / OFF",0.15,function()
+	State.Aimbot = not State.Aimbot
+end)
 
-local FPSBtn = createButton("FPS BOOST: OFF")
-local ESPBtn = createButton("ESP: OFF")
-local AIMBtn = createButton("AIMBOT: OFF")
+btn("ESP ON / OFF",0.25,function()
+	State.ESP = not State.ESP
+end)
 
-local CriminalBtn = createButton("Aim Criminals: ON")
-local InmateBtn = createButton("Aim Inmates: OFF")
-local GuardBtn = createButton("Aim Guards: OFF")
+btn("NAME ESP",0.35,function()
+	State.NameESP = not State.NameESP
+end)
 
---================= FPS BOOST =================--
+btn("DISTANCE ESP",0.45,function()
+	State.DistanceESP = not State.DistanceESP
+end)
 
-local FPS_ON = false
-
-FPSBtn.MouseButton1Click:Connect(function()
-	FPS_ON = not FPS_ON
-	FPSBtn.Text = "FPS BOOST: "..(FPS_ON and "ON" or "OFF")
-
-	if FPS_ON then
-		for _,v in pairs(workspace:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.Material = Enum.Material.Plastic
-				v.Reflectance = 0
-			elseif v:IsA("Decal") or v:IsA("Texture") then
-				v:Destroy()
-			elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-				v.Enabled = false
-			end
-		end
+btn("FPS BOOST",0.55,function()
+	State.FPSBoost = not State.FPSBoost
+	if State.FPSBoost then
 		Lighting.GlobalShadows = false
+		Lighting.FogEnd = 9e9
 	end
 end)
 
---================= ESP =================--
-
-local ESP_ON = false
-local ESPFolder = Instance.new("Folder", Gui)
-
-local function applyESP(plr)
-	if not ESP_ON or plr == LocalPlayer then return end
-
-	local function onChar(char)
-		task.wait(0.2)
-		if not ESP_ON then return end
-		if not char:FindFirstChild("HumanoidRootPart") then return end
-
-		if ESPFolder:FindFirstChild(plr.Name) then
-			ESPFolder[plr.Name]:Destroy()
-		end
-
-		local hl = Instance.new("Highlight")
-		hl.Name = plr.Name
-		hl.Adornee = char
-		hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-		hl.OutlineTransparency = 1
-
-		if plr.Team and plr.Team.Name == "Guards" then
-			hl.FillColor = Color3.fromRGB(0,170,255)
-		elseif plr.Team and plr.Team.Name == "Criminals" then
-			hl.FillColor = Color3.fromRGB(255,60,60)
-		else
-			hl.FillColor = Color3.fromRGB(255,170,0)
-		end
-
-		hl.Parent = ESPFolder
-	end
-
-	if plr.Character then onChar(plr.Character) end
-	plr.CharacterAdded:Connect(onChar)
-end
-
-local function refreshESP()
-	ESPFolder:ClearAllChildren()
-	if not ESP_ON then return end
-	for _,p in pairs(Players:GetPlayers()) do
-		applyESP(p)
-	end
-end
-
-ESPBtn.MouseButton1Click:Connect(function()
-	ESP_ON = not ESP_ON
-	ESPBtn.Text = "ESP: "..(ESP_ON and "ON" or "OFF")
-	refreshESP()
+btn("TP BASE CRIMINAL",0.65,function()
+	LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(0,5,0)
 end)
 
-Players.PlayerAdded:Connect(function(p)
-	if ESP_ON then
-		applyESP(p)
+btn("TP SPAWN GUARD",0.75,function()
+	LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(820,101,2230)
+end)
+
+btn("ESCAPE PRISON",0.85,function()
+	LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(390,79,1986)
+	task.wait(0.5)
+	LocalPlayer.Character.Humanoid.Health = 0
+end)
+
+--==============================
+-- ESP (Highlight + Billboard)
+--==============================
+local ESPCache = {}
+
+local function setupESP(plr)
+	if plr == LocalPlayer then return end
+
+	local highlight = Instance.new("Highlight")
+	highlight.FillColor = Color3.fromRGB(255,0,0)
+	highlight.FillTransparency = 0.4
+	highlight.Enabled = false
+	highlight.Parent = gui
+
+	local bill = Instance.new("BillboardGui")
+	bill.Size = UDim2.fromOffset(100,40)
+	bill.AlwaysOnTop = true
+	bill.Enabled = false
+	bill.Parent = gui
+
+	local txt = Instance.new("TextLabel", bill)
+	txt.Size = UDim2.fromScale(1,1)
+	txt.BackgroundTransparency = 1
+	txt.TextScaled = true
+	txt.TextColor3 = Color3.new(1,1,1)
+
+	ESPCache[plr] = {Highlight=highlight,Bill=bill,Text=txt}
+end
+
+for _,p in pairs(Players:GetPlayers()) do setupESP(p) end
+Players.PlayerAdded:Connect(setupESP)
+
+RunService.RenderStepped:Connect(function()
+	for plr,data in pairs(ESPCache) do
+		local char = plr.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then continue end
+
+		data.Highlight.Adornee = char
+		data.Highlight.Enabled = State.ESP
+
+		data.Bill.Adornee = hrp
+		data.Bill.Enabled = State.ESP and (State.NameESP or State.DistanceESP)
+
+		local dist = math.floor((Camera.CFrame.Position - hrp.Position).Magnitude)
+		data.Text.Text =
+			(State.NameESP and plr.Name or "") ..
+			(State.DistanceESP and (" ["..dist.."m]") or "")
 	end
 end)
 
---================= AIMBOT =================--
-
-local AIM_ON = false
-local AIM_DISTANCE = 450 -- alcance maior
-local SMOOTH = 0.15
-
-local AIM_CRIMINALS = true
-local AIM_INMATES = false
-local AIM_GUARDS = false
-
-local function hasLineOfSight(char)
-	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return false end
-
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Blacklist
-	params.FilterDescendantsInstances = {LocalPlayer.Character, char}
-
-	local result = workspace:Raycast(Camera.CFrame.Position, root.Position - Camera.CFrame.Position, params)
-	return result == nil
-end
-
-local function validTarget(plr)
-	if not plr.Team then return false end
-	if plr.Team.Name == "Criminals" and AIM_CRIMINALS then return true end
-	if plr.Team.Name == "Inmates" and AIM_INMATES then return true end
-	if plr.Team.Name == "Guards" and AIM_GUARDS then return true end
-	return false
-end
-
+--==============================
+-- AIMBOT (leve, sem grudar)
+--==============================
 local function getTarget()
-	local closest, dist = nil, math.huge
+	local closest,dist = nil,math.huge
 	for _,p in pairs(Players:GetPlayers()) do
-		if p ~= LocalPlayer and validTarget(p)
-		and p.Character
-		and p.Character:FindFirstChild("HumanoidRootPart")
-		and p.Character:FindFirstChild("Humanoid")
-		and p.Character.Humanoid.Health > 0
-		and hasLineOfSight(p.Character) then
-
-			local d = (p.Character.HumanoidRootPart.Position - Camera.CFrame.Position).Magnitude
-			if d < AIM_DISTANCE and d < dist then
-				dist = d
-				closest = p
+		if p~=LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+			local d = (Camera.CFrame.Position - p.Character.Head.Position).Magnitude
+			if d < dist and d < 300 then
+				dist,closest = d,p
 			end
 		end
 	end
 	return closest
 end
 
-AIMBtn.MouseButton1Click:Connect(function()
-	AIM_ON = not AIM_ON
-	AIMBtn.Text = "AIMBOT: "..(AIM_ON and "ON" or "OFF")
-end)
-
-CriminalBtn.MouseButton1Click:Connect(function()
-	AIM_CRIMINALS = not AIM_CRIMINALS
-	CriminalBtn.Text = "Aim Criminals: "..(AIM_CRIMINALS and "ON" or "OFF")
-end)
-
-InmateBtn.MouseButton1Click:Connect(function()
-	AIM_INMATES = not AIM_INMATES
-	InmateBtn.Text = "Aim Inmates: "..(AIM_INMATES and "ON" or "OFF")
-end)
-
-GuardBtn.MouseButton1Click:Connect(function()
-	AIM_GUARDS = not AIM_GUARDS
-	GuardBtn.Text = "Aim Guards: "..(AIM_GUARDS and "ON" or "OFF")
-end)
-
 RunService.RenderStepped:Connect(function()
-	if AIM_ON then
-		local t = getTarget()
-		if t and t.Character then
-			Camera.CFrame = Camera.CFrame:Lerp(
-				CFrame.new(Camera.CFrame.Position, t.Character.HumanoidRootPart.Position),
-				SMOOTH
-			)
-		end
+	if not State.Aimbot then return end
+	local t = getTarget()
+	if t and t.Character then
+		Camera.CFrame = CFrame.new(
+			Camera.CFrame.Position,
+			t.Character.Head.Position
+		)
 	end
 end)
 
---================= NOTIFICATION =================--
-
-pcall(function()
-	game.StarterGui:SetCore("SendNotification",{
-		Title = "mh prison life v1 (beta)",
-		Text = "carregado com sucesso!\nby: Miel",
-		Duration = 4
-	})
-end)
+print("MH Prison Life v1.1 carregado com sucesso!")
