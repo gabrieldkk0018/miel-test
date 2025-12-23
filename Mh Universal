@@ -1,0 +1,6 @@
+-- MH Universal - Beta Lock
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+LocalPlayer:Kick("Esse script ainda está em beta!")
